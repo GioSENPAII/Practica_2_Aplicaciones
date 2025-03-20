@@ -1,3 +1,4 @@
+// Reemplazar el contenido de app/src/main/java/com/example/practicacrud/CrudActivity.kt
 package com.example.practicacrud
 
 import android.content.Intent
@@ -9,9 +10,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.example.practicacrud.adapters.DataAdapter
+import com.example.practicacrud.adapters.UserAdapter
 import com.example.practicacrud.api.RetrofitClient
-import com.example.practicacrud.models.DataItem
+import com.example.practicacrud.models.UserResponse
 import com.example.practicacrud.utils.AuthManager
 import retrofit2.Call
 import retrofit2.Callback
@@ -23,8 +24,8 @@ class CrudActivity : AppCompatActivity() {
     private lateinit var btnCreate: Button
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var authManager: AuthManager
-    private lateinit var adapter: DataAdapter
-    private val dataList = mutableListOf<DataItem>()
+    private lateinit var adapter: UserAdapter
+    private val userList = mutableListOf<UserResponse>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,23 +45,23 @@ class CrudActivity : AppCompatActivity() {
 
         // Configurar SwipeRefreshLayout
         swipeRefreshLayout.setOnRefreshListener {
-            loadData()
+            loadUsers()
         }
 
         // Configurar RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = DataAdapter(dataList,
-            onEditClick = { data -> editData(data) },
-            onDeleteClick = { data -> deleteData(data) }
+        adapter = UserAdapter(userList,
+            onEditClick = { user -> editUser(user) },
+            onDeleteClick = { user -> deleteUser(user) }
         )
         recyclerView.adapter = adapter
 
         // Cargar datos iniciales
-        loadData()
+        loadUsers()
 
-        // Botón para crear un nuevo registro
+        // Botón para crear un nuevo usuario
         btnCreate.setOnClickListener {
-            val intent = Intent(this, CreateEditActivity::class.java)
+            val intent = Intent(this, CreateEditUserActivity::class.java)
             startActivity(intent)
         }
     }
@@ -68,24 +69,24 @@ class CrudActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         // Recargar datos cuando la actividad vuelva a estar activa
-        loadData()
+        loadUsers()
     }
 
-    private fun loadData() {
+    private fun loadUsers() {
         swipeRefreshLayout.isRefreshing = true
 
-        RetrofitClient.create(authManager).getData().enqueue(object : Callback<List<DataItem>> {
-            override fun onResponse(call: Call<List<DataItem>>, response: Response<List<DataItem>>) {
+        RetrofitClient.create(authManager).getAllUsers().enqueue(object : Callback<List<UserResponse>> {
+            override fun onResponse(call: Call<List<UserResponse>>, response: Response<List<UserResponse>>) {
                 swipeRefreshLayout.isRefreshing = false
 
                 if (response.isSuccessful) {
-                    dataList.clear()
-                    response.body()?.let { dataList.addAll(it) }
+                    userList.clear()
+                    response.body()?.let { userList.addAll(it) }
                     adapter.notifyDataSetChanged()
 
                     // Mostrar mensaje si no hay datos
-                    if (dataList.isEmpty()) {
-                        Toast.makeText(this@CrudActivity, "No hay registros disponibles", Toast.LENGTH_SHORT).show()
+                    if (userList.isEmpty()) {
+                        Toast.makeText(this@CrudActivity, "No hay usuarios disponibles", Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     if (response.code() == 401) {
@@ -96,13 +97,13 @@ class CrudActivity : AppCompatActivity() {
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                         startActivity(intent)
                     } else {
-                        Toast.makeText(this@CrudActivity, "Error al cargar datos: ${response.code()}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CrudActivity, "Error al cargar usuarios: ${response.code()}", Toast.LENGTH_SHORT).show()
                         Log.e("CrudActivity", "Error: ${response.errorBody()?.string()}")
                     }
                 }
             }
 
-            override fun onFailure(call: Call<List<DataItem>>, t: Throwable) {
+            override fun onFailure(call: Call<List<UserResponse>>, t: Throwable) {
                 swipeRefreshLayout.isRefreshing = false
                 Toast.makeText(this@CrudActivity, "Error de conexión: ${t.message}", Toast.LENGTH_SHORT).show()
                 Log.e("CrudActivity", "Error: ${t.message}")
@@ -110,24 +111,30 @@ class CrudActivity : AppCompatActivity() {
         })
     }
 
-    private fun editData(data: DataItem) {
-        val intent = Intent(this, CreateEditActivity::class.java).apply {
-            putExtra("id", data.id)
-            putExtra("name", data.name)
-            putExtra("description", data.description)
+    private fun editUser(user: UserResponse) {
+        val intent = Intent(this, CreateEditUserActivity::class.java).apply {
+            putExtra("id", user.id)
+            putExtra("username", user.username)
+            putExtra("role", user.role)
         }
         startActivity(intent)
     }
 
-    private fun deleteData(data: DataItem) {
-        RetrofitClient.create(authManager).deleteData(data.id).enqueue(object : Callback<Void> {
+    private fun deleteUser(user: UserResponse) {
+        // No permitir eliminar al propio administrador
+        if (user.id == authManager.getUserId()) {
+            Toast.makeText(this, "No puedes eliminarte a ti mismo", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        RetrofitClient.create(authManager).deleteUser(user.id).enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 if (response.isSuccessful) {
-                    dataList.remove(data)
+                    userList.remove(user)
                     adapter.notifyDataSetChanged()
-                    Toast.makeText(this@CrudActivity, "Registro eliminado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CrudActivity, "Usuario eliminado", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this@CrudActivity, "Error al eliminar registro: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CrudActivity, "Error al eliminar usuario: ${response.code()}", Toast.LENGTH_SHORT).show()
                     Log.e("CrudActivity", "Error: ${response.errorBody()?.string()}")
                 }
             }

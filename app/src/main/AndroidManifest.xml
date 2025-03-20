@@ -67,6 +67,13 @@
             android:exported="false"
             android:label="Perfil"
             android:theme="@style/Theme.PracticaCRUD" />
+
+        <!-- Añadir la nueva actividad al archivo app/src/main/AndroidManifest.xml -->
+        <activity
+            android:name=".CreateEditUserActivity"
+            android:exported="false"
+            android:label="Crear/Editar Usuario"
+            android:theme="@style/Theme.PracticaCRUD" />
     </application>
 
 </manifest>

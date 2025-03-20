@@ -48,22 +48,23 @@ class MainActivity : AppCompatActivity() {
         val isLoggedIn = authManager.isLoggedIn()
         val isAdmin = authManager.isAdmin()
 
+        // Limpiar las opciones anteriores para evitar duplicados
+        menu.clear()
+
         // Para usuarios no autenticados
-        menu.findItem(R.id.nav_login).isVisible = !isLoggedIn
-        menu.findItem(R.id.nav_register).isVisible = !isLoggedIn
-
-        // Para usuarios autenticados
-        menu.findItem(R.id.nav_crud).isVisible = isLoggedIn && isAdmin // Solo admin ve CRUD
-        menu.findItem(R.id.nav_profile).isVisible = isLoggedIn && !isAdmin // Solo usuarios normales ven Perfil
-
-        // Añadir opción de logout para todos los usuarios autenticados
-        if (isLoggedIn) {
-            // Si ya existe, eliminar primero para evitar duplicados
-            val logoutItem = menu.findItem(MENU_LOGOUT_ID)
-            if (logoutItem != null) {
-                menu.removeItem(MENU_LOGOUT_ID)
+        if (!isLoggedIn) {
+            menu.add(0, R.id.nav_login, Menu.NONE, "Iniciar Sesión 😎")
+            menu.add(0, R.id.nav_register, Menu.NONE, "Registrarse 🫶🏻")
+        } else {
+            // Para administradores
+            if (isAdmin) {
+                menu.add(0, R.id.nav_crud, Menu.NONE, "Operaciones CRUD 🤖")
+            } else {
+                // Para usuarios normales
+                menu.add(0, R.id.nav_profile, Menu.NONE, "Perfil 👤")
             }
-            // Añadir nuevo item de logout
+
+            // Opción de logout para todos los usuarios autenticados
             menu.add(0, MENU_LOGOUT_ID, Menu.NONE, "Cerrar Sesión 🔒")
         }
 
@@ -114,6 +115,15 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
+
+        // Cerrar el drawer después de seleccionar una opción
+        drawerLayout.closeDrawers()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Actualizar el menú de navegación para reflejar el estado de autenticación actual
+        setupNavigationMenu()
     }
 
     override fun onSupportNavigateUp(): Boolean {
