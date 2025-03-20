@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">PracticaCRUD</string>
+    <string name="open">Abrir navegación</string>
+    <string name="close">Cerrar navegación</string>
 </resources>

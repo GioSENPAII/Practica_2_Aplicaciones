@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center_horizontal">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mi Perfil"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp"/>
+
+    <ImageView
+        android:id="@+id/ivProfilePicture"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@drawable/ic_launcher_foreground"
+        android:background="@color/purple_200"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnChooseImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Elegir imagen"
+        android:backgroundTint="@color/purple_500"
+        android:textColor="@color/white"
+        android:layout_marginBottom="24dp"/>
+
+    <EditText
+        android:id="@+id/etUsername"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nombre de usuario"
+        android:inputType="text"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btnUpdateProfile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Actualizar perfil"
+        android:backgroundTint="@color/purple_500"
+        android:textColor="@color/white"/>
+
+</LinearLayout>
