@@ -17,6 +17,16 @@ class AuthManager(context: Context) {
         return sharedPreferences.getString("token", null)
     }
 
+    // Guardar el rol
+    fun saveRole(role: String) {
+        sharedPreferences.edit().putString("role", role).apply()
+    }
+
+    // Obtener el rol
+    fun getRole(): String? {
+        return sharedPreferences.getString("role", null)
+    }
+
     // Eliminar el token (para cerrar sesión)
     fun clearToken() {
         sharedPreferences.edit().remove("token").apply()

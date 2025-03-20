@@ -1,16 +1,20 @@
 package com.example.practicacrud.api
 
-import com.example.practicacrud.models.LoginResponse
-import com.example.practicacrud.models.User
+import com.example.practicacrud.models.DataItem
 import retrofit2.Call
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
+import retrofit2.http.*
 
 interface ApiService {
-    @POST("register")
-    fun registerUser(@Body user: User): Call<LoginResponse>
+    // Operaciones CRUD
+    @GET("data")
+    fun getData(): Call<List<DataItem>>
 
-    @POST("login")
-    fun loginUser(@Body user: User): Call<LoginResponse>
+    @POST("data")
+    fun createData(@Body data: DataItem): Call<DataItem>
+
+    @PUT("data/{id}")
+    fun updateData(@Path("id") id: Int, @Body data: DataItem): Call<DataItem>
+
+    @DELETE("data/{id}")
+    fun deleteData(@Path("id") id: Int): Call<Void>
 }

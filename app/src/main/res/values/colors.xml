@@ -7,6 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="red">#ef233c</color>
     <color name="nav_background_color">#219EBC</color> <!-- Fondo del menú -->
     <color name="nav_item_text_color">#023047</color> <!-- Color del texto -->
 </resources>
