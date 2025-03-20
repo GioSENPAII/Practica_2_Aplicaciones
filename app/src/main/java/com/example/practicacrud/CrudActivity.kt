@@ -92,8 +92,9 @@ class CrudActivity : AppCompatActivity() {
                         // Token expirado o inválido
                         Toast.makeText(this@CrudActivity, "Sesión expirada. Por favor, inicie sesión nuevamente", Toast.LENGTH_SHORT).show()
                         authManager.clearAll()
-                        startActivity(Intent(this@CrudActivity, LoginActivity::class.java)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+                        val intent = Intent(this@CrudActivity, LoginActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        startActivity(intent)
                     } else {
                         Toast.makeText(this@CrudActivity, "Error al cargar datos: ${response.code()}", Toast.LENGTH_SHORT).show()
                         Log.e("CrudActivity", "Error: ${response.errorBody()?.string()}")

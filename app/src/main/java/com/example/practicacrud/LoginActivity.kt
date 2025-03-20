@@ -70,12 +70,15 @@ class LoginActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val loginResponse = response.body()
                     if (loginResponse != null) {
-                        // Guardar token y navegar a MainActivity
+                        // Guardar token
                         authManager.saveToken(loginResponse.token)
 
-                        // Aquí deberíamos obtener y guardar el rol del usuario
-                        // Por ahora, asumiremos que es "admin" para pruebas
-                        authManager.saveRole("admin")
+                        // Guardar rol y otros datos del usuario
+                        loginResponse.user?.let { user ->
+                            authManager.saveRole(user.role)
+                            authManager.saveUserId(user.id)
+                            authManager.saveUsername(user.username)
+                        }
 
                         navigateToMain()
                     }

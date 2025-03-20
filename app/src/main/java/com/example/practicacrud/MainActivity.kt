@@ -2,8 +2,8 @@ package com.example.practicacrud
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -46,15 +46,17 @@ class MainActivity : AppCompatActivity() {
         // Actualizar menú según el estado de autenticación
         val menu = navigationView.menu
         val isLoggedIn = authManager.isLoggedIn()
-        val isAdmin = authManager.getRole() == "admin"
+        val isAdmin = authManager.isAdmin()
 
-        // Ocultar/mostrar items según el estado de autenticación y rol
+        // Para usuarios no autenticados
         menu.findItem(R.id.nav_login).isVisible = !isLoggedIn
         menu.findItem(R.id.nav_register).isVisible = !isLoggedIn
-        menu.findItem(R.id.nav_crud).isVisible = isLoggedIn && isAdmin
-        menu.findItem(R.id.nav_profile).isVisible = isLoggedIn
 
-        // Añadir opción de logout si está autenticado
+        // Para usuarios autenticados
+        menu.findItem(R.id.nav_crud).isVisible = isLoggedIn && isAdmin // Solo admin ve CRUD
+        menu.findItem(R.id.nav_profile).isVisible = isLoggedIn && !isAdmin // Solo usuarios normales ven Perfil
+
+        // Añadir opción de logout para todos los usuarios autenticados
         if (isLoggedIn) {
             // Si ya existe, eliminar primero para evitar duplicados
             val logoutItem = menu.findItem(MENU_LOGOUT_ID)
@@ -63,6 +65,22 @@ class MainActivity : AppCompatActivity() {
             }
             // Añadir nuevo item de logout
             menu.add(0, MENU_LOGOUT_ID, Menu.NONE, "Cerrar Sesión 🔒")
+        }
+
+        // Mostrar mensaje de bienvenida con rol
+        val headerView = navigationView.getHeaderView(0)
+        val tvUsername = headerView.findViewById<TextView>(R.id.tvUsername)
+        val tvRole = headerView.findViewById<TextView>(R.id.tvRole)
+
+        // Actualizar según usuario logueado
+        if (isLoggedIn) {
+            val username = authManager.getUsername() ?: "Usuario"
+            val role = if (isAdmin) "Administrador" else "Usuario"
+            tvUsername.text = username
+            tvRole.text = role
+        } else {
+            tvUsername.text = "Invitado"
+            tvRole.text = "Sin sesión"
         }
 
         navigationView.setNavigationItemSelectedListener { menuItem ->
@@ -88,8 +106,7 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 MENU_LOGOUT_ID -> {
-                    authManager.clearToken()
-                    authManager.clearRole()
+                    authManager.clearAll()
                     startActivity(Intent(this, LoginActivity::class.java)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
                     true
