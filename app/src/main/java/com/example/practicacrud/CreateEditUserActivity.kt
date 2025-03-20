@@ -213,10 +213,12 @@ class CreateEditUserActivity : AppCompatActivity() {
         })
     }
 
+    // Actualiza la función uploadUserProfilePicture en CreateEditUserActivity
     private fun uploadUserProfilePicture(userId: Int, uri: Uri) {
         try {
-            // Convertir Uri a File
-            val file = File(cacheDir, "temp_image.jpg")
+            // Convertir Uri a File con un nombre único basado en timestamp
+            val timestamp = System.currentTimeMillis()
+            val file = File(cacheDir, "temp_image_${timestamp}.jpg")
             contentResolver.openInputStream(uri)?.use { input ->
                 FileOutputStream(file).use { output ->
                     input.copyTo(output)
@@ -227,23 +229,33 @@ class CreateEditUserActivity : AppCompatActivity() {
             val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
             val body = MultipartBody.Part.createFormData("image", file.name, requestFile)
 
+            // Log para depuración
+            Log.d("CreateEditUserActivity", "Subiendo imagen para usuario $userId: ${file.name}, tamaño: ${file.length()}")
+
             // Enviar la imagen al servidor
             RetrofitClient.create(authManager).uploadUserProfilePicture(userId, body)
                 .enqueue(object : Callback<UserResponse> {
                     override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                         if (response.isSuccessful) {
-                            Log.d("CreateEditUserActivity", "Imagen actualizada correctamente")
+                            Log.d("CreateEditUserActivity", "Imagen actualizada correctamente: ${response.body()}")
+                            Toast.makeText(this@CreateEditUserActivity, "Imagen actualizada correctamente", Toast.LENGTH_SHORT).show()
                         } else {
-                            Log.e("CreateEditUserActivity", "Error al actualizar imagen: ${response.code()}")
+                            val errorMsg = "Error al actualizar imagen: ${response.code()}, ${response.errorBody()?.string()}"
+                            Log.e("CreateEditUserActivity", errorMsg)
+                            Toast.makeText(this@CreateEditUserActivity, errorMsg, Toast.LENGTH_SHORT).show()
                         }
                     }
 
                     override fun onFailure(call: Call<UserResponse>, t: Throwable) {
-                        Log.e("CreateEditUserActivity", "Error de conexión: ${t.message}")
+                        val errorMsg = "Error de conexión: ${t.message}"
+                        Log.e("CreateEditUserActivity", errorMsg)
+                        Toast.makeText(this@CreateEditUserActivity, errorMsg, Toast.LENGTH_SHORT).show()
                     }
                 })
         } catch (e: Exception) {
-            Log.e("CreateEditUserActivity", "Error al procesar la imagen: ${e.message}")
+            val errorMsg = "Error al procesar la imagen: ${e.message}"
+            Log.e("CreateEditUserActivity", errorMsg)
+            Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show()
         }
     }
 }

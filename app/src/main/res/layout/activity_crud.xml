@@ -10,7 +10,7 @@
         android:id="@+id/btnCreate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Crear Nuevo Registro"
+        android:text="Crear Nuevo Usuario"
         android:backgroundTint="@color/purple_500"
         android:textColor="@color/white"
         android:layout_marginBottom="16dp" />
@@ -19,8 +19,7 @@
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="8dp">
+        android:layout_height="match_parent">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
