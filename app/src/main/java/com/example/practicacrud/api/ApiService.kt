@@ -50,7 +50,7 @@ interface ApiService {
 
     // En app/src/main/java/com/example/practicacrud/api/ApiService.kt
 // Mantén la definición original:
-    @PUT("users/profile")
+    @POST("users/profile")
     fun updateUserProfile(@Body user: UserResponse): Call<UserResponse>
 
     // Para subir imagen de perfil
