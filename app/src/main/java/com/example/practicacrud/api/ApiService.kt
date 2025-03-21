@@ -48,6 +48,8 @@ interface ApiService {
     @GET("users/profile")
     fun getUserProfile(): Call<UserResponse>
 
+    // En app/src/main/java/com/example/practicacrud/api/ApiService.kt
+// Mantén la definición original:
     @PUT("users/profile")
     fun updateUserProfile(@Body user: UserResponse): Call<UserResponse>
 

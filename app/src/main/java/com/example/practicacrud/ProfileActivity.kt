@@ -71,32 +71,42 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun loadUserProfile() {
+        Log.d("ProfileActivity", "Cargando perfil de usuario")
+
         RetrofitClient.create(authManager).getUserProfile().enqueue(object : Callback<UserResponse> {
             override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                 if (response.isSuccessful) {
                     val user = response.body()
+                    Log.d("ProfileActivity", "Perfil cargado: $user")
+
                     if (user != null) {
                         etUsername.setText(user.username)
 
                         // Cargar la imagen de perfil si existe
                         user.profilePicture?.let { profilePic ->
-                            // Usar Glide para cargar la imagen
+                            Log.d("ProfileActivity", "Cargando imagen: $BASE_URL$profilePic")
+
+                            // Usar Glide para cargar la imagen con skipMemoryCache para evitar problemas de caché
                             Glide.with(this@ProfileActivity)
                                 .load(BASE_URL + profilePic)
+                                .skipMemoryCache(true)
+                                .diskCacheStrategy(DiskCacheStrategy.NONE)
                                 .placeholder(R.drawable.ic_launcher_foreground)
                                 .error(R.drawable.ic_launcher_foreground)
                                 .into(ivProfilePicture)
                         }
                     }
                 } else {
-                    Toast.makeText(this@ProfileActivity, "Error al cargar perfil", Toast.LENGTH_SHORT).show()
-                    Log.e("ProfileActivity", "Error: ${response.errorBody()?.string()}")
+                    val errorMsg = "Error al cargar perfil: ${response.code()}, ${response.errorBody()?.string()}"
+                    Toast.makeText(this@ProfileActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                    Log.e("ProfileActivity", errorMsg)
                 }
             }
 
             override fun onFailure(call: Call<UserResponse>, t: Throwable) {
-                Toast.makeText(this@ProfileActivity, "Error de conexión: ${t.message}", Toast.LENGTH_SHORT).show()
-                Log.e("ProfileActivity", "Error: ${t.message}")
+                val errorMsg = "Error de conexión: ${t.message}"
+                Toast.makeText(this@ProfileActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                Log.e("ProfileActivity", errorMsg)
             }
         })
     }
@@ -127,14 +137,19 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 
+    // En app/src/main/java/com/example/practicacrud/ProfileActivity.kt
+    // En app/src/main/java/com/example/practicacrud/ProfileActivity.kt
     private fun updateUsername(newUsername: String) {
-        // Crear objeto con datos actualizados
+        // Crear objeto con datos actualizados (mantén el formato original)
         val updatedUser = UserResponse(
             id = authManager.getUserId(),
             username = newUsername,
             role = authManager.getRole() ?: "user",
             profilePicture = null // No modificamos la imagen aquí
         )
+
+        Log.d("ProfileActivity", "Enviando actualización de usuario: $updatedUser")
+        Log.d("ProfileActivity", "Token: ${authManager.getToken()}")
 
         RetrofitClient.create(authManager).updateUserProfile(updatedUser)
             .enqueue(object : Callback<UserResponse> {
@@ -144,19 +159,21 @@ class ProfileActivity : AppCompatActivity() {
                         authManager.saveUsername(newUsername)
                         Toast.makeText(this@ProfileActivity, "Nombre de usuario actualizado", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(this@ProfileActivity, "Error al actualizar el nombre de usuario: ${response.code()}", Toast.LENGTH_SHORT).show()
-                        Log.e("ProfileActivity", "Error: ${response.errorBody()?.string()}")
+                        val errorBody = response.errorBody()?.string() ?: "Error desconocido"
+                        val errorMsg = "Error al actualizar el nombre de usuario: ${response.code()}, $errorBody"
+                        Log.e("ProfileActivity", errorMsg)
+                        Toast.makeText(this@ProfileActivity, errorMsg, Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onFailure(call: Call<UserResponse>, t: Throwable) {
-                    Toast.makeText(this@ProfileActivity, "Error de conexión: ${t.message}", Toast.LENGTH_SHORT).show()
-                    Log.e("ProfileActivity", "Error: ${t.message}")
+                    val errorMsg = "Error de conexión: ${t.message}"
+                    Log.e("ProfileActivity", errorMsg)
+                    Toast.makeText(this@ProfileActivity, errorMsg, Toast.LENGTH_SHORT).show()
                 }
             })
     }
 
-    // Modificar la función uploadProfilePicture en ProfileActivity.kt
     private fun uploadProfilePicture(uri: Uri) {
         try {
             // Convertir Uri a File con un nombre único basado en timestamp
@@ -172,7 +189,7 @@ class ProfileActivity : AppCompatActivity() {
             val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
             val body = MultipartBody.Part.createFormData("image", file.name, requestFile)
 
-            // Agregar log para depuración
+            // Log para depuración
             Log.d("ProfileActivity", "Subiendo imagen: ${file.name}, tamaño: ${file.length()}")
 
             // Enviar la imagen al servidor
@@ -181,37 +198,32 @@ class ProfileActivity : AppCompatActivity() {
                     override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                         if (response.isSuccessful) {
                             Toast.makeText(this@ProfileActivity, "Imagen actualizada correctamente", Toast.LENGTH_SHORT).show()
-                            // Si se actualizó el perfil, actualizar también los datos guardados localmente
-                            response.body()?.let { user ->
-                                // Intentar cargar la imagen actualizada inmediatamente
-                                user.profilePicture?.let { profilePic ->
-                                    // Usar Glide con skipMemoryCache y diskCacheStrategy para evitar problemas de caché
-                                    Glide.with(this@ProfileActivity)
-                                        .load(BASE_URL + profilePic)
-                                        .skipMemoryCache(true)
-                                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                                        .placeholder(R.drawable.ic_launcher_foreground)
-                                        .error(R.drawable.ic_launcher_foreground)
-                                        .into(ivProfilePicture)
-                                }
-                            }
+
+                            // Si se actualizó el perfil, cargar los datos actualizados
+                            loadUserProfile()
+
+                            // Limpiar caché de Glide para cargar la nueva imagen
+                            Glide.get(this@ProfileActivity).clearMemory()
+                            Thread {
+                                Glide.get(this@ProfileActivity).clearDiskCache()
+                            }.start()
                         } else {
                             val errorMsg = "Error al actualizar imagen: ${response.code()}, ${response.errorBody()?.string()}"
-                            Toast.makeText(this@ProfileActivity, errorMsg, Toast.LENGTH_SHORT).show()
                             Log.e("ProfileActivity", errorMsg)
+                            Toast.makeText(this@ProfileActivity, errorMsg, Toast.LENGTH_SHORT).show()
                         }
                     }
 
                     override fun onFailure(call: Call<UserResponse>, t: Throwable) {
                         val errorMsg = "Error de conexión: ${t.message}"
-                        Toast.makeText(this@ProfileActivity, errorMsg, Toast.LENGTH_SHORT).show()
                         Log.e("ProfileActivity", errorMsg)
+                        Toast.makeText(this@ProfileActivity, errorMsg, Toast.LENGTH_SHORT).show()
                     }
                 })
         } catch (e: Exception) {
             val errorMsg = "Error al procesar la imagen: ${e.message}"
-            Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show()
             Log.e("ProfileActivity", errorMsg)
+            Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show()
         }
     }
 }

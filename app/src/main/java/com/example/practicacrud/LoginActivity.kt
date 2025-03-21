@@ -62,6 +62,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    // En app/src/main/java/com/example/practicacrud/LoginActivity.kt
     private fun login(username: String, password: String) {
         val loginRequest = LoginRequest(username, password)
 
@@ -71,6 +72,7 @@ class LoginActivity : AppCompatActivity() {
                     val loginResponse = response.body()
                     if (loginResponse != null) {
                         // Guardar token
+                        Log.d("LoginActivity", "Token recibido: ${loginResponse.token}")
                         authManager.saveToken(loginResponse.token)
 
                         // Guardar rol y otros datos del usuario
@@ -78,6 +80,8 @@ class LoginActivity : AppCompatActivity() {
                             authManager.saveRole(user.role)
                             authManager.saveUserId(user.id)
                             authManager.saveUsername(user.username)
+
+                            Log.d("LoginActivity", "Usuario logueado: ${user.username}, ID: ${user.id}, Rol: ${user.role}")
                         }
 
                         navigateToMain()

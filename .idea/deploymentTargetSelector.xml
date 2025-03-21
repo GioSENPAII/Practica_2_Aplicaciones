@@ -7,7 +7,7 @@
       </SelectionState>
       <SelectionState runConfigName="MainActivity">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-03-20T17:49:27.742016Z">
+        <DropdownSelection timestamp="2025-03-21T01:04:03.541887Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=/Users/giosenpaii/.android/avd/Medium_Phone_API_35.avd" />
@@ -18,10 +18,10 @@
       </SelectionState>
       <SelectionState runConfigName="CreateEditActivity">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-03-20T17:56:04.074839Z">
+        <DropdownSelection timestamp="2025-03-21T00:10:42.577116Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/giosenpaii/.android/avd/Medium_Phone_API_35.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=6fa1e187" />
             </handle>
           </Target>
         </DropdownSelection>

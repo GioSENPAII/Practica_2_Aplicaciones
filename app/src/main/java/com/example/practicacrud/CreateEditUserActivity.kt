@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.practicacrud.api.RetrofitClient
 import com.example.practicacrud.models.RegisterRequest
 import com.example.practicacrud.models.UserResponse
@@ -88,7 +89,7 @@ class CreateEditUserActivity : AppCompatActivity() {
         val existingRole = intent.getStringExtra("role")
         val existingProfilePicture = intent.getStringExtra("profilePicture")
 
-        // Si es una edición, llenar los campos con los datos existentes
+// Si es una edición, llenar los campos con los datos existentes
         if (userId != -1 && existingUsername != null && existingRole != null) {
             etUsername.setText(existingUsername)
             val rolePosition = roles.indexOf(existingRole)
@@ -98,8 +99,11 @@ class CreateEditUserActivity : AppCompatActivity() {
 
             // Cargar imagen de perfil si existe
             existingProfilePicture?.let { profilePic ->
+                Log.d("CreateEditUserActivity", "Cargando imagen: ${RetrofitClient.BASE_URL}$profilePic")
                 Glide.with(this)
                     .load(RetrofitClient.BASE_URL + profilePic)
+                    .skipMemoryCache(true)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .placeholder(R.drawable.ic_launcher_foreground)
                     .error(R.drawable.ic_launcher_foreground)
                     .into(ivProfilePicture)
@@ -151,29 +155,32 @@ class CreateEditUserActivity : AppCompatActivity() {
             override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                 if (response.isSuccessful) {
                     Toast.makeText(this@CreateEditUserActivity, "Usuario creado", Toast.LENGTH_SHORT).show()
+                    Log.d("CreateEditUserActivity", "Usuario creado: ${response.body()}")
 
                     // Si hay una imagen seleccionada, subirla para el nuevo usuario
                     if (selectedImageUri != null) {
                         response.body()?.id?.let { newUserId ->
                             uploadUserProfilePicture(newUserId, selectedImageUri!!)
                         }
+                    } else {
+                        finish() // Cierra la actividad después de guardar si no hay imagen
                     }
-
-                    finish() // Cierra la actividad después de guardar
                 } else {
                     if (response.code() == 401) {
                         Toast.makeText(this@CreateEditUserActivity, "Sesión expirada. Por favor, inicie sesión nuevamente", Toast.LENGTH_SHORT).show()
                         authManager.clearAll()
                         finish()
                     } else {
-                        Toast.makeText(this@CreateEditUserActivity, "Error al crear usuario: ${response.code()}", Toast.LENGTH_SHORT).show()
-                        Log.e("CreateEditUserActivity", "Error: ${response.errorBody()?.string()}")
+                        val errorMsg = "Error al crear usuario: ${response.code()}, ${response.errorBody()?.string()}"
+                        Toast.makeText(this@CreateEditUserActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                        Log.e("CreateEditUserActivity", errorMsg)
                     }
                 }
             }
 
             override fun onFailure(call: Call<UserResponse>, t: Throwable) {
-                Toast.makeText(this@CreateEditUserActivity, "Error de conexión: ${t.message}", Toast.LENGTH_SHORT).show()
+                val errorMsg = "Error de conexión: ${t.message}"
+                Toast.makeText(this@CreateEditUserActivity, errorMsg, Toast.LENGTH_SHORT).show()
                 Log.e("CreateEditUserActivity", "Error: ${t.message}")
             }
         })
@@ -181,39 +188,48 @@ class CreateEditUserActivity : AppCompatActivity() {
 
     private fun updateUser(id: Int, user: UserResponse, newPassword: String?) {
         // Si hay una nueva contraseña, necesitamos actualizar la contraseña en el servidor
-        // Esto requeriría un endpoint adicional, pero por ahora solo actualizamos el username y role
+        // En el objeto user, añadimos el campo password si es necesario
+        val updatedUser = if (newPassword?.isNotEmpty() == true) {
+            // Crear una copia del objeto con todos los campos más la contraseña
+            // Esto requiere modificar el modelo o la API
+            user.copy() // Aquí deberíamos añadir la contraseña, pero el modelo actual no lo permite
+        } else {
+            user
+        }
 
-        RetrofitClient.create(authManager).updateUser(id, user).enqueue(object : Callback<UserResponse> {
+        RetrofitClient.create(authManager).updateUser(id, updatedUser).enqueue(object : Callback<UserResponse> {
             override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                 if (response.isSuccessful) {
                     Toast.makeText(this@CreateEditUserActivity, "Usuario actualizado", Toast.LENGTH_SHORT).show()
+                    Log.d("CreateEditUserActivity", "Usuario actualizado: ${response.body()}")
 
                     // Si hay una imagen seleccionada, subirla
                     if (selectedImageUri != null) {
                         uploadUserProfilePicture(id, selectedImageUri!!)
+                    } else {
+                        finish() // Cierra la actividad después de guardar si no hay imagen
                     }
-
-                    finish() // Cierra la actividad después de guardar
                 } else {
                     if (response.code() == 401) {
                         Toast.makeText(this@CreateEditUserActivity, "Sesión expirada. Por favor, inicie sesión nuevamente", Toast.LENGTH_SHORT).show()
                         authManager.clearAll()
                         finish()
                     } else {
-                        Toast.makeText(this@CreateEditUserActivity, "Error al actualizar usuario: ${response.code()}", Toast.LENGTH_SHORT).show()
-                        Log.e("CreateEditUserActivity", "Error: ${response.errorBody()?.string()}")
+                        val errorMsg = "Error al actualizar usuario: ${response.code()}, ${response.errorBody()?.string()}"
+                        Toast.makeText(this@CreateEditUserActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                        Log.e("CreateEditUserActivity", errorMsg)
                     }
                 }
             }
 
             override fun onFailure(call: Call<UserResponse>, t: Throwable) {
-                Toast.makeText(this@CreateEditUserActivity, "Error de conexión: ${t.message}", Toast.LENGTH_SHORT).show()
+                val errorMsg = "Error de conexión: ${t.message}"
+                Toast.makeText(this@CreateEditUserActivity, errorMsg, Toast.LENGTH_SHORT).show()
                 Log.e("CreateEditUserActivity", "Error: ${t.message}")
             }
         })
     }
 
-    // Actualiza la función uploadUserProfilePicture en CreateEditUserActivity
     private fun uploadUserProfilePicture(userId: Int, uri: Uri) {
         try {
             // Convertir Uri a File con un nombre único basado en timestamp
@@ -239,10 +255,12 @@ class CreateEditUserActivity : AppCompatActivity() {
                         if (response.isSuccessful) {
                             Log.d("CreateEditUserActivity", "Imagen actualizada correctamente: ${response.body()}")
                             Toast.makeText(this@CreateEditUserActivity, "Imagen actualizada correctamente", Toast.LENGTH_SHORT).show()
+                            finish() // Cierra la actividad después de subir la imagen
                         } else {
                             val errorMsg = "Error al actualizar imagen: ${response.code()}, ${response.errorBody()?.string()}"
                             Log.e("CreateEditUserActivity", errorMsg)
                             Toast.makeText(this@CreateEditUserActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                            finish() // Cerramos de todas formas porque el usuario ya está creado/actualizado
                         }
                     }
 
@@ -250,12 +268,14 @@ class CreateEditUserActivity : AppCompatActivity() {
                         val errorMsg = "Error de conexión: ${t.message}"
                         Log.e("CreateEditUserActivity", errorMsg)
                         Toast.makeText(this@CreateEditUserActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                        finish() // Cerramos de todas formas porque el usuario ya está creado/actualizado
                     }
                 })
         } catch (e: Exception) {
             val errorMsg = "Error al procesar la imagen: ${e.message}"
             Log.e("CreateEditUserActivity", errorMsg)
             Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show()
+            finish() // Cerramos de todas formas porque el usuario ya está creado/actualizado
         }
     }
 }

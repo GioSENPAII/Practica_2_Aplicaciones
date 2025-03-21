@@ -1,4 +1,3 @@
-// Reemplazar el contenido de app/src/main/java/com/example/practicacrud/CrudActivity.kt
 package com.example.practicacrud
 
 import android.content.Intent
@@ -30,6 +29,9 @@ class CrudActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_crud)
+
+        // Ocultar el ActionBar para evitar que el título se sobreponga
+        supportActionBar?.hide()
 
         recyclerView = findViewById(R.id.recyclerView)
         btnCreate = findViewById(R.id.btnCreate)
@@ -116,6 +118,7 @@ class CrudActivity : AppCompatActivity() {
             putExtra("id", user.id)
             putExtra("username", user.username)
             putExtra("role", user.role)
+            putExtra("profilePicture", user.profilePicture)
         }
         startActivity(intent)
     }
